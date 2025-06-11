@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Career Counsellor - IBM Hackathon</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #eef2f7;
+        color: #333;
+        line-height: 1.6;
+      }
+      .container {
+        max-width: 900px;
+        margin: 20px auto;
+        background-color: #ffffff;
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      }
+      h1 {
+        text-align: center;
+        color: #0056b3;
+        margin-bottom: 25px;
+        font-size: 2.5em;
+      }
+      p {
+        text-align: center;
+        margin-bottom: 30px;
+        font-size: 1.1em;
+        color: #555;
+      }
+      .question-group {
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #444;
+        font-size: 1em;
+      }
+      select {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #cdd5e0;
+        border-radius: 6px;
+        box-sizing: border-box;
+        font-size: 1em;
+        background-color: white;
+        appearance: none; /* Remove default browser arrow */
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007bff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13.2-6.4H18.6c-4.7%200-9.2%202.1-12.8%205.7l-12.8%2012.8c-3.6%203.6-5.7%208.2-5.7%2013.2s2.1%209.6%205.7%2013.2l128%20128c3.6%203.6%208.2%205.7%2013.2%205.7s9.6-2.1%2013.2-5.7l128-128c3.6-3.6%205.7-8.2%205.7-13.2s-2.1-9.6-5.7-13.2z%22%2F%3E%3C%2Fsvg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px top 50%;
+        background-size: 12px auto;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      }
+      select:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+        outline: none;
+      }
+      button {
+        display: block;
+        width: 100%;
+        padding: 15px 25px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1.2em;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 30px;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+      }
+      button:hover {
+        background-color: #0056b3;
+        transform: translateY(-2px);
+      }
+      button:disabled {
+        background-color: #a0cbed;
+        cursor: not-allowed;
+        transform: translateY(0);
+      }
+      #result-area {
+        margin-top: 40px;
+        padding: 25px;
+        background-color: #e6f7ff;
+        border: 1px solid #91d5ff;
+        border-radius: 10px;
+        text-align: center;
+        font-size: 1.5em;
+        font-weight: bold;
+        color: #0056b3;
+        display: none; /* Hidden by default */
+      }
+      .loading-spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #007bff;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 20px auto;
+        display: none; /* Hidden by default */
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+      .error-message {
+        color: #dc3545;
+        font-weight: bold;
+        margin-top: 15px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>AI Career Counsellor</h1>
+      <p>
+        Answer the questions below to get your personalized career
+        recommendation!
+      </p>
+
+      <div id="questions-form"></div>
+
+      <button onclick="predictCareer()">Get My Career Recommendation</button>
+
+      <div class="loading-spinner" id="loadingSpinner"></div>
+
+      <div id="result-area">
+        <p>Recommended Career: <span id="predictionResult"></span></p>
+      </div>
+      <p class="error-message" id="errorMessage"></p>
+    </div>
+
+    <script>
+      // The API key is now handled on the server-side!
+      const BACKEND_PREDICT_ENDPOINT = "/predict"; // This is the endpoint on your server.js
+
+      const careerQuestions = [
+        {
+          id: "q1",
+          label:
+            "What kind of tasks or activities do you generally enjoy doing? What kind of work environment do you thrive in?",
+          featureName: "Nature of Work",
+          options: [
+            "Select an option", // Default placeholder
+            "Analyze data",
+            "Create content",
+            "Design infrastructure",
+            "Educate students",
+            "Treat patients",
+          ],
+        },
+        {
+          id: "q2",
+          label:
+            "What are your strengths and the skills you're most confident in? Are there any skills you're particularly interested in developing?",
+          featureName: "Key Skills",
+          options: [
+            "Select an option",
+            "AutoCAD, Planning",
+            "Communication, Creativity",
+            "Medical Knowledge",
+            "Photoshop, Design",
+            "Python, ML, Stats",
+          ],
+        },
+        {
+          id: "q3",
+          label:
+            "What level of education or training are you currently pursuing or considering? Are you open to further education, certifications, or specialized training?",
+          featureName: "Education Needed",
+          options: [
+            "Select an option",
+            "BA",
+            "BDes",
+            "BE",
+            "BSc",
+            "Diploma",
+            "LLB",
+            "MBBS",
+            "MSc",
+            "MTech",
+            "PhD",
+          ],
+        },
+        {
+          id: "q4",
+          label:
+            "Do you prefer working independently or in a team setting? How much interaction with others do you enjoy in a typical day?",
+          featureName: "Intro/Extro",
+          options: ["Select an option", "Either", "Extrovert", "Introvert"],
+        },
+        {
+          id: "q5",
+          label:
+            "What are your financial goals or expectations for a starting salary?",
+          featureName: "Starting Salary",
+          options: [
+            "Select an option",
+            "2 LPA",
+            "4 LPA",
+            "6 LPA",
+            "8 LPA",
+            "10LPA",
+            "Above 10LPA",
+          ],
+        },
+        {
+          id: "q6",
+          label:
+            "What are your long-term career aspirations? Are you looking for a career with clear advancement paths, or something that allows for more flexibility and diverse experiences?",
+          featureName: "Growth Scope",
+          options: ["Select an option", "High", "Moderate", "Low"],
+        },
+        {
+          id: "q7",
+          label:
+            "How do you feel about traveling for work, either locally or internationally? Is it something you'd be open to or prefer to avoid?",
+          featureName: "Travel?",
+          options: ["Select an option", "Yes", "No", "Maybe"],
+        },
+        {
+          id: "q8",
+          label:
+            "What kind of challenges do you find motivating, and which ones do you prefer to avoid? How do you typically handle pressure or unexpected obstacles?",
+          featureName: "Challenges",
+          options: [
+            "Select an option",
+            "High pressure",
+            "keep up with tech",
+            "Long hours",
+            "On-site issues",
+            "Tight deadlines",
+          ],
+        },
+        {
+          id: "q9",
+          label:
+            "What kind of company culture or organizational structure appeals to you? Do you have a preference for large corporations, startups, non-profits, or government agencies?",
+          featureName: "Employers",
+          options: [
+            "Select an option",
+            "Agencies",
+            "Construction Firms",
+            "Freelance",
+            "Hospitals",
+            "Media Houses",
+            "Schools",
+            "Startups",
+          ],
+        },
+        {
+          id: "q10",
+          label:
+            "How important is the option for remote work to you? Do you prefer working from home, in an office, or a hybrid model?",
+          featureName: "Remote Work?",
+          options: ["Select an option", "Yes", "No", "Sometimes"],
+        },
+        {
+          id: "q11",
+          label:
+            " How much opportunity for creative thinking and problem-solving do you look for in a job? Do you prefer roles with clear guidelines or more open-ended tasks?",
+          featureName: "Creativity",
+          options: ["Select an option", "Low", "Medium", "High"],
+        },
+        {
+          id: "q12",
+          label:
+            "Do you prefer hands-on technical work, or are you more interested in leading teams and managing projects?",
+          featureName: "Tech/Mgmt",
+          options: ["Select an option", "Technical", "Mixed", "Managerial"],
+        },
+        {
+          id: "q13",
+          label:
+            "How important is work-life balance to you? What does your ideal work schedule look like?",
+          featureName: "Work-Life Balance",
+          options: ["Select an option", "Good", "Moderate", "Poor"],
+        },
+        {
+          id: "q14",
+          label:
+            "Are you open to pursuing additional certifications or specialized training outside of a degree program?",
+          featureName: "Certifications",
+          options: ["Select an option", "Yes", "No", "Preferred"],
+        },
+        {
+          id: "q15",
+          label:
+            "How would you describe your personality? What kind of work environment brings out your best qualities?",
+          featureName: "Personality Fit",
+          options: [
+            "Select an option",
+            "Analytical",
+            "Artistic",
+            "Compassionate",
+            "Patient",
+            "Practical",
+          ],
+        },
+        {
+          id: "q16",
+          label:
+            "How well do you handle high-pressure situations or tight deadlines? Do you thrive under pressure or prefer a more steady pace?",
+          featureName: "Pressure",
+          options: ["Select an option", "High", "Medium", "Low"],
+        },
+        {
+          id: "q17",
+          label:
+            "Are you interested in the possibility of freelancing or working independently in the future? Do you value autonomy and flexibility in your work?",
+          featureName: "Freelancing",
+          options: ["Select an option", "Yes", "Rarely", "No"],
+        },
+        {
+          id: "q18",
+          label:
+            "How do you feel about competition in the job market? Are you comfortable with a competitive field, or do you prefer areas with less contention?",
+          featureName: "Competition",
+          options: ["Select an option", "High", "Medium", "Low"],
+        },
+        {
+          id: "q19",
+          label:
+            "Are there any particular industries or sectors that you find interesting or passionate about?",
+          featureName: "Relevant Industries",
+          options: [
+            "Select an option",
+            "Construction",
+            "Education",
+            "Finance",
+            "Healthcare",
+            "IT",
+            "Media",
+          ],
+        },
+      ];
+
+      // --- DOM Elements ---
+      const formContainer = document.getElementById("questions-form");
+      const predictionResultElement =
+        document.getElementById("predictionResult");
+      const loadingSpinner = document.getElementById("loadingSpinner");
+      const recommendButton = document.querySelector("button");
+      const resultArea = document.getElementById("result-area");
+      const errorMessageElement = document.getElementById("errorMessage");
+
+      // --- Dynamically create question dropdowns on page load ---
+      window.onload = function () {
+        careerQuestions.forEach((q, index) => {
+          const group = document.createElement("div");
+          group.className = "question-group";
+
+          const label = document.createElement("label");
+          label.setAttribute("for", q.id);
+          label.textContent = `${index + 1}. ${q.label}`; // Add numbering for display
+
+          const select = document.createElement("select");
+          select.id = q.id;
+          select.name = q.id;
+
+          q.options.forEach((optionText, optIndex) => {
+            const option = document.createElement("option");
+            option.value = optIndex === 0 ? "" : optionText; // First option is empty value placeholder
+            option.textContent = optionText;
+            option.disabled = optIndex === 0; // Disable the "Select an option"
+            option.selected = optIndex === 0; // Select the placeholder by default
+            select.appendChild(option);
+          });
+
+          group.appendChild(label);
+          group.appendChild(select);
+          formContainer.appendChild(group);
+        });
+      };
+
+      // --- Function to make prediction ---
+      async function predictCareer() {
+        predictionResultElement.textContent = "";
+        resultArea.style.display = "none"; // Hide result area initially
+        errorMessageElement.textContent = ""; // Clear previous errors
+        loadingSpinner.style.display = "block"; // Show spinner
+        recommendButton.disabled = true; // Disable button during prediction
+
+        try {
+          const userAnswers = [];
+          const payloadFields = [];
+
+          // IMPORTANT: Ensure the order matches your WML model's expected input fields
+          careerQuestions.forEach((q) => {
+            const selectElement = document.getElementById(q.id);
+            if (selectElement) {
+              if (selectElement.value === "") {
+                throw new Error(
+                  `Please select an option for question "${
+                    q.label.split(".")[1]
+                  }.`
+                );
+              }
+              userAnswers.push(selectElement.value);
+              payloadFields.push(q.featureName);
+            } else {
+              console.warn(`Element with ID ${q.id} not found.`);
+            }
+          });
+
+          // Prepare the payload to send to your backend
+          const requestBody = {
+            fields: payloadFields,
+            values: [userAnswers],
+          };
+
+          console.log(
+            "Sending to backend:",
+            JSON.stringify(requestBody, null, 2)
+          );
+
+          const response = await fetch(BACKEND_PREDICT_ENDPOINT, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(requestBody),
+          });
+
+          console.log("Backend Response Status:", response.status);
+
+          if (!response.ok) {
+            const errorData = await response.json(); // Assuming backend sends JSON error
+            throw new Error(
+              `Prediction failed: ${response.status} - ${
+                errorData.message || "Unknown server error."
+              }`
+            );
+          }
+
+          const result = await response.json();
+          console.log("Prediction Result from Backend:", result);
+
+          // Display the prediction on your website
+          if (result && result.predictedCareer) {
+            predictionResultElement.textContent = result.predictedCareer;
+            resultArea.style.display = "block";
+          } else {
+            predictionResultElement.textContent =
+              "No prediction found in the response.";
+            resultArea.style.display = "block";
+            console.warn(
+              "Backend response did not contain expected 'predictedCareer' property:",
+              result
+            );
+          }
+        } catch (error) {
+          console.error("Error during prediction:", error);
+          errorMessageElement.textContent = `Error: ${
+            error.message ||
+            "An unexpected error occurred. Check console for details."
+          }`;
+          resultArea.style.display = "none";
+        } finally {
+          loadingSpinner.style.display = "none";
+          recommendButton.disabled = false;
+        }
+      }
+    </script>
+  </body>
+</html>
