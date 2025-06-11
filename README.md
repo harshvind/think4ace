@@ -15,15 +15,13 @@ IBM Watson Machine Learning API
 HTML + JS frontend
 
 Setup & Run instructions 
-Clone the repository
-git clone https://github.com/Rashi24492/Think4ace.git
-cd Think4ace
-2. Install dependencies
+
+1. Install dependencies
 npm install
-3. Add your .env file Create a file named .env with the following:
+2. Add your .env file Create a file named .env with the following:
 IBM_CLOUD_API_KEY=your_api_key
 WML_API_ENDPOINT=https://us-south.ml.cloud.ibm.com/ml/v4/deployments/your-deployment-id/predictions?version=2021-05-01
-4. Start the backend
+3. Start the backend
 node server.js
 API key: https://au-syd.ml.cloud.ibm.com/ml/v4/deployments/5c141254-0d86-453f-acbf-aa453253b3bf/predictions?version=2021-05-01
 
