@@ -27,6 +27,6 @@ WML_API_ENDPOINT=https://us-south.ml.cloud.ibm.com/ml/v4/deployments/your-deploy
 node server.js
 API key: https://au-syd.ml.cloud.ibm.com/ml/v4/deployments/5c141254-0d86-453f-acbf-aa453253b3bf/predictions?version=2021-05-01
 
-Short video:
+Short demo video:
 https://youtu.be/85umKJrufnU?feature=shared
 https://youtu.be/EYrZbzOTfwk?feature=shared
