@@ -1,5 +1,7 @@
 Team name :Think4ace 
 
+Project name: career counseling
+
 Lack of career awareness
 statement :  Many students face difficulties in choosing the right career due to limited exposures.They get easily  attracted towards every career choices .
 
